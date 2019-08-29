@@ -1,17 +1,3 @@
 .DS_Store
 node_modules/
 /dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore
-# Editor directories and files
-.idea
-.vscode
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
