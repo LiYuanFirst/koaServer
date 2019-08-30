@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "await-fs": "^1.0.0",
     "co-mysql": "^1.0.0",
     "koa": "^2.8.1",
     "koa-better-body": "^3.0.4",
