@@ -6,14 +6,16 @@ const path = require('path');
 const session = require('koa-session');
 const fs = require('fs');
 const ejs = require('koa-ejs');
-
+const config = require('./config');
 
 let server = new Koa();
-server.listen(8080);
+server.listen(config.PORT);
+console.log(`server runing at ${config.PORT}`);
 
 // 中间件
+// 设置文件上传保存路径
 server.use(body({
-    uploadDir: path.resolve('./static/upload')
+    uploadDir: config.UPLOAD_DIR
 }))
 
 //读取.keys文件作为session秘钥
@@ -25,7 +27,7 @@ server.use(session({
 
 //连接数据库
 server.context.db = require('./libs/database');
-
+server.context.config = config;
 
 //渲染用ejs
 ejs(server,{
