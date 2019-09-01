@@ -87,6 +87,7 @@ router.post('/banner', async ctx => {
     ctx.redirect(`${HTTP_ROOT}/admin/banner`);
 });
 // 删除一条数据库数据及上传的文件
+// (通过get访问，成功后跳转页面)
 router.get('/banner/delete/:id/', async ctx => {
     let { id } = ctx.params;
     console.log(id)
