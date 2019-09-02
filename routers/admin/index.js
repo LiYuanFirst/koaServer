@@ -58,7 +58,6 @@ router.get('/banner', async ctx => {
     const { HTTP_ROOT } = ctx.config;
     const table = 'banner_table';
     let datas = await ctx.db.query(`SELECT * FROM ${table}`);
-    console.log(datas);
     // ctx.body = datas;
     await ctx.render('admin/table', {
         HTTP_ROOT,
@@ -83,14 +82,12 @@ router.post('/banner', async ctx => {
     const { HTTP_ROOT } = ctx.config;
     src = path.basename(src[0].path);
     await ctx.db.query('INSERT INTO banner_table (title, src, href, serial) VALUES(?,?,?,?)', [title, src, href, serial]);
-    // ctx.body = 'success'
     ctx.redirect(`${HTTP_ROOT}/admin/banner`);
 });
 // 删除一条数据库数据及上传的文件
 // (通过get访问，成功后跳转页面)
 router.get('/banner/delete/:id/', async ctx => {
     let { id } = ctx.params;
-    console.log(id)
     const { HTTP_ROOT, UPLOAD_DIR } = ctx.config;
     let data = await ctx.db.query('SELECT * FROM banner_table WHERE ID=?', [id]);
     ctx.assert(data.length, 400, 'no data');
@@ -103,7 +100,7 @@ router.get('/banner/delete/:id/', async ctx => {
 
 });
 
-// 修改一条数据库数据
+// 获取一条数据库数据(页面跳转)
 router.get('/banner/modify/:id/', async ctx => {
     let { id } = ctx.params;
     const { HTTP_ROOT, UPLOAD_DIR } = ctx.config;
@@ -123,12 +120,60 @@ router.get('/banner/modify/:id/', async ctx => {
             title: '序号', name: 'serial', type: 'number'
         }],
         type: 'modify',
-        action: `${HTTP_ROOT}/admin/banner/modify/:${id}`,
+        action: `${HTTP_ROOT}/admin/banner/modify/${id}`,
         old_data: row
     });
-    // await common.unlink(path.resolve(UPLOAD_DIR, row.src));
-    // await ctx.db.query('DELETE FROM banner_table WHERE ID=?', [id]);
-    // ctx.redirect(`${HTTP_ROOT}/admin/banner`);
+
+});
+
+// 查询一条数据库数据
+router.get('/banner/get/:id/', async ctx => {
+    let { id } = ctx.params;
+    const { HTTP_ROOT, UPLOAD_DIR } = ctx.config;
+    let row = await ctx.db.query('SELECT * FROM banner_table WHERE ID=?', [id]);
+    ctx.assert(row.length, 400, 'no data');
+    if(row.length==0){
+        ctx.body = {err:1,msg: 'no data'}
+    }else{
+        ctx.body = { err: 0, msg: 'success', data: row[0]}
+    }
+
+});
+
+// 修改一条数据库数据
+router.post('/banner/modify/:id/', async ctx => {
+    let { id } = ctx.params;
+    let postData = ctx.request.fields;
+    const { HTTP_ROOT, UPLOAD_DIR } = ctx.config;
+    //获取数据库内该条数据
+    let data = await ctx.db.query('SELECT * FROM banner_table WHERE ID=?', [id]);
+    ctx.assert(data.length, 400, 'no data');
+
+    let keys = ['title', 'href', 'serial'];
+    let vals = [];
+
+    keys.forEach(key=>{
+        vals.push(postData[key]);
+    });
+    
+    //对文件改变做判断处理
+    let src_change = false;
+    if(postData.src && postData.src.length && postData.src[0].size){
+        src_change = true
+    }
+
+    if(src_change){
+        keys.push('src');
+        vals.push(path.basename(postData.src[0].path));
+    }
+    await ctx.db.query(`UPDATE banner_table SET ${
+        keys.map(key=>(`${key}=?`)).join(',')
+    } WHERE ID=?`,[...vals,id]);
+    if(src_change){
+        //删除文件
+        await common.unlink(path.resolve(UPLOAD_DIR, data[0].src));
+    }
+    ctx.redirect(`${HTTP_ROOT}/admin/banner`);
 
 });
 module.exports = router.routes()
